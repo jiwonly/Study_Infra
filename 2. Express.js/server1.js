@@ -1,9 +1,10 @@
 import http from "http";
 import fs from "fs";
-import os, { totalmem } from "os";
+import os from "os";
 import path from "path";
 import express from "express";
 import { fileURLToPath } from "url";
+import cookieParser from "cookie-parser";
 
 // 현재 파일의 URL을 가져와서 경로로 변환
 const __filename = fileURLToPath(import.meta.url);
@@ -12,12 +13,14 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = 3000;
 
-// JSON 요청 바디 파싱 미들웨어
+// JSON 요청 바디 파싱 미들웨어 및 쿠키 파서 추가
 app.use(express.json());
+app.use(cookieParser());
 
 // GET /
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.render("index.html");
+  // res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // POST /api/signup
