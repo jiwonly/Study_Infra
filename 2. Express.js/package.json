@@ -1,11 +1,12 @@
 {
+  "type": "module",
+  "scripts": {
+    "infra": "nodemon server.js"
+  },
   "dependencies": {
     "express": "^4.21.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
-  },
-  "scripts": {
-    "infra": "nodemon server2.js"
   }
 }
