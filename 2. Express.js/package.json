@@ -1,9 +1,10 @@
 {
   "type": "module",
   "scripts": {
-    "infra": "nodemon server.js"
+    "infra": "nodemon server1.js"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.6",
     "express": "^4.21.0"
   },
   "devDependencies": {

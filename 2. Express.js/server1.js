@@ -17,7 +17,7 @@ app.use(express.json());
 
 // GET /
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "week2.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // POST /api/signup
