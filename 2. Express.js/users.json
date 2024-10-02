@@ -1,12 +1,14 @@
 [
   {
-    "username": "ysjjw2003",
-    "password": "ys",
-    "email": "ysjjw2003@naver.com"
+    "username": "test1",
+    "email": "test1@example.com"
   },
   {
-    "username": "test",
-    "password": "test",
-    "email": "test@example.com"
+    "username": "test2",
+    "email": "test2@example.com"
+  },
+  {
+    "username": "test3",
+    "email": "test3@example.com"
   }
 ]

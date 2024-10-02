@@ -18,6 +18,24 @@ app.use(cookieParser()); // 쿠키를 파싱하는 미들웨어
 // 임시 토큰을 저장하는 배열
 const sessions = {};
 
+const readJSONFile = (filePath) => {
+  try {
+    return fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath)) : [];
+  } catch (err) {
+    console.log("error");
+    return [];
+  }
+};
+
+const writeJSONFile = (filePath, data) => {
+  try {
+    // JSON.stringify : JavaScript 객체를 JSON 문자열로 변환
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.log("error");
+  }
+};
+
 // GET /
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
@@ -27,14 +45,9 @@ app.get("/", (req, res) => {
 app.post("/api/signup", (req, res) => {
   const { username, password, email } = req.body;
 
-  const users = fs.existsSync("users.json")
-    ? JSON.parse(fs.readFileSync("users.json"))
-    : [];
-
+  const users = readJSONFile("users.json");
   users.push({ username, password, email });
-
-  // JSON.stringify : JavaScript 객체를 JSON 문자열로 변환
-  fs.writeFileSync("users.json", JSON.stringify(users, null, 2));
+  writeJSONFile("users.json", users);
 
   res.status(201).send("회원가입 완료");
 });
@@ -42,7 +55,7 @@ app.post("/api/signup", (req, res) => {
 // POST /api/login
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
-  const users = JSON.parse(fs.readFileSync("users.json", "utf-8"));
+  const users = readJSONFile("users.json");
   const isUser = users.find(
     (user) => user.username === username && user.password === password
   );
@@ -61,21 +74,23 @@ app.post("/api/login", (req, res) => {
   }
 });
 
-// 인증 미들웨어 (API 접근 전 토큰 확인)
-function authenticate(req, res, next) {
+// 인증 미들웨어 (토큰 확인)
+const authenticate = (req, res, next) => {
+  // 클라이언트가 보낸 auth_token 쿠키 값 가져옴
   const token = req.cookies.auth_token;
 
+  // token, sessions[token]이 존재하면
   if (token && sessions[token]) {
-    req.username = sessions[token];
-    next();
+    req.username = sessions[token]; // 인증된 사용자 정보 저장
+    next(); // 인증 성공
   } else {
     res.status(401).send("인증되지 않은 사용자입니다.");
   }
-}
+};
 
 // GET /api/users
 app.get("/api/users", authenticate, (req, res) => {
-  const users = JSON.parse(fs.readFileSync("users.json", "utf-8"));
+  const users = readJSONFile("users.json");
   const safeUsers = users.map(({ username, email }) => ({ username, email }));
   res.json(safeUsers);
 });
