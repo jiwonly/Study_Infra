@@ -95,5 +95,5 @@ app.get("/api/os", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`서버가 포트 ${port}에서 실행 중`);
+  console.log(`서버 실행 중`);
 });

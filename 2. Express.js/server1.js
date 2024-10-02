@@ -1,4 +1,3 @@
-import http from "http";
 import fs from "fs";
 import os from "os";
 import path from "path";
@@ -17,10 +16,12 @@ const port = 3000;
 app.use(express.json());
 app.use(cookieParser());
 
+// 임시 토큰을 저장하는 배열
+const sessions = {};
+
 // GET /
 app.get("/", (req, res) => {
-  res.render("index.html");
-  // res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // POST /api/signup
@@ -48,14 +49,32 @@ app.post("/api/login", (req, res) => {
   );
 
   if (isUser) {
+    // 인증 토큰 생성
+    const token = `${username}-${Date.now()}`;
+    sessions[token] = username;
+
+    // 토큰을 쿠키로 설정 (httpOnly : js에서 접근 X, 1시간 유지))
+    res.cookie("auth_token", token, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+
     res.status(200).send("로그인 성공");
   } else {
     res.status(401).send("아이디 또는 비밀번호가 잘못되었습니다.");
   }
 });
 
+function authenticate(req, res, next) {
+  const token = req.cookies.auth_token;
+
+  if (token && sessions[token]) {
+    req.username = sessions[token];
+    next();
+  } else {
+    res.status(401).send("인증되지 않은 사용자입니다.");
+  }
+}
+
 // GET /api/users
-app.get("/api/users", (req, res) => {
+app.get("/api/users", authenticate, (req, res) => {
   const users = JSON.parse(fs.readFileSync("users.json", "utf-8"));
   const safeUsers = users.map((user) => {
     return {
@@ -67,7 +86,7 @@ app.get("/api/users", (req, res) => {
 });
 
 // GET /api/os
-app.get("/api/os", (req, res) => {
+app.get("/api/os", authenticate, (req, res) => {
   const osInfo = {
     type: os.type(),
     hostname: os.hostname(),
@@ -78,5 +97,5 @@ app.get("/api/os", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`서버가 포트 ${port}에서 실행 중`);
+  console.log(`서버 실행 중`);
 });
