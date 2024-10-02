@@ -18,6 +18,7 @@ app.use(cookieParser()); // 쿠키를 파싱하는 미들웨어
 // 임시 토큰을 저장하는 배열
 const sessions = {};
 
+// 반복되는 부분 따로 함수로 저장
 const readJSONFile = (filePath) => {
   try {
     return fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath)) : [];
