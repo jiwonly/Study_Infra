@@ -12,9 +12,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = 3000;
 
-// JSON 요청 바디 파싱 미들웨어 및 쿠키 파서 추가
-app.use(express.json());
-app.use(cookieParser());
+app.use(express.json()); // JSON 요청을 파싱하는 미들웨어
+app.use(cookieParser()); // 쿠키를 파싱하는 미들웨어
 
 // 임시 토큰을 저장하는 배열
 const sessions = {};
@@ -62,6 +61,7 @@ app.post("/api/login", (req, res) => {
   }
 });
 
+// 인증 미들웨어 (API 접근 전 토큰 확인)
 function authenticate(req, res, next) {
   const token = req.cookies.auth_token;
 
@@ -76,12 +76,7 @@ function authenticate(req, res, next) {
 // GET /api/users
 app.get("/api/users", authenticate, (req, res) => {
   const users = JSON.parse(fs.readFileSync("users.json", "utf-8"));
-  const safeUsers = users.map((user) => {
-    return {
-      username: user.username,
-      email: user.email,
-    };
-  });
+  const safeUsers = users.map(({ username, email }) => ({ username, email }));
   res.json(safeUsers);
 });
 
