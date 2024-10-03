@@ -2,22 +2,17 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import express from "express";
-import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
 
-// 현재 파일의 URL을 가져와서 경로로 변환
-// ES6 import에서 __dirname를 쓰기 위함
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// JWT 비밀 키 설정 : 토큰의 서명을 생성하고 검증하기 위함
+const SECRET_KEY = "your-secret-key";
 
-const app = express();
+const app = express(); /// Express 애플리케이션 생성
 const port = 3000;
 
 app.use(express.json()); // JSON 요청을 파싱하는 미들웨어
 app.use(cookieParser()); // 쿠키를 파싱하는 미들웨어
-
-// 임시 토큰을 저장하는 배열
-const sessions = {};
 
 // 반복되는 부분 따로 함수로 저장
 const readJSONFile = (filePath) => {
@@ -52,7 +47,7 @@ const writeJSONFile = (filePath, data) => {
 
 // GET /
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.resolve("index.html"));
 });
 
 // POST /api/signup
@@ -80,17 +75,14 @@ app.post("/api/login", async (req, res) => {
       (user) => user.username === username && user.password === password
     );
 
+    // 사용자가 있다면 JWT 생성
     if (isUser) {
-      // 인증 토큰 생성
-      const token = `${username}-${Date.now()}`;
-      sessions[token] = username;
+      const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: "1h" });
 
-      // 토큰을 쿠키로 설정 (httpOnly : js에서 접근 X, 1시간 유지))
       res.cookie("auth_token", token, {
         httpOnly: true,
-        maxAge: 60 * 60 * 1000,
+        maxAge: 60 * 60 * 1000, // 1시간
       });
-
       res.status(200).send("로그인 성공");
     } else {
       res.status(401).send("아이디 또는 비밀번호가 잘못되었습니다.");
@@ -102,16 +94,24 @@ app.post("/api/login", async (req, res) => {
 
 // 인증 미들웨어 (토큰 확인)
 const authenticate = (req, res, next) => {
-  // 클라이언트가 보낸 auth_token 쿠키 값 가져옴
+  // 쿠키에서 토큰 가져오기
   const token = req.cookies.auth_token;
 
-  // token, sessions[token]이 존재하면
-  if (token && sessions[token]) {
-    req.username = sessions[token]; // 인증된 사용자 정보 저장
-    next(); // 인증 성공
-  } else {
-    res.status(401).send("인증되지 않은 사용자입니다.");
+  if (!token) {
+    return res.status(401).send("인증되지 않은 사용자입니다.");
   }
+
+  // jwt.verify()는 토큰이 서버에서 발급한 것인지,
+  // 토큰이 아직 유효한지 확인
+  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+    if (err) {
+      return res.status(403).send("토큰이 유효하지 않습니다.");
+    }
+    // 인증된 사용자 정보 저장
+    // 이후의 미들웨어나 라우트 핸들러에서 사용자가 누군인지 알 수 O
+    req.username = decoded.username;
+    next();
+  });
 };
 
 // GET /api/users
