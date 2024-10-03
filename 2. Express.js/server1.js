@@ -8,7 +8,8 @@ import jwt from "jsonwebtoken";
 // JWT 비밀 키 설정 : 토큰의 서명을 생성하고 검증하기 위함
 const SECRET_KEY = "your-secret-key";
 
-const app = express(); /// Express 애플리케이션 생성
+const app = express(); // 여기서 express 애플리케이션 생성
+const router = express.Router();
 const port = 3000;
 
 app.use(express.json()); // JSON 요청을 파싱하는 미들웨어
@@ -46,13 +47,17 @@ const writeJSONFile = (filePath, data) => {
 };
 
 // GET /
-app.get("/", (req, res) => {
+router.get("/", (req, res) => {
   res.sendFile(path.resolve("index.html"));
 });
 
 // POST /api/signup
-app.post("/api/signup", async (req, res) => {
+router.post("/api/signup", async (req, res) => {
   const { username, password, email } = req.body;
+
+  if (!username || !password || !email) {
+    return res.status(400).json({ error: "모든 필드를 입력해야 합니다." });
+  }
 
   try {
     const users = await readJSONFile("users.json");
@@ -66,8 +71,14 @@ app.post("/api/signup", async (req, res) => {
 });
 
 // POST /api/login
-app.post("/api/login", async (req, res) => {
+router.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ error: "아이디와 비밀번호를 모두 입력해야 합니다." });
+  }
 
   try {
     const users = await readJSONFile("users.json");
@@ -115,7 +126,7 @@ const authenticate = (req, res, next) => {
 };
 
 // GET /api/users
-app.get("/api/users", authenticate, async (req, res) => {
+router.get("/api/users", authenticate, async (req, res) => {
   try {
     const users = await readJSONFile("users.json");
     const safeUsers = users.map(({ username, email }) => ({ username, email }));
@@ -126,7 +137,7 @@ app.get("/api/users", authenticate, async (req, res) => {
 });
 
 // GET /api/os
-app.get("/api/os", authenticate, (req, res) => {
+router.get("/api/os", authenticate, (req, res) => {
   const osInfo = {
     type: os.type(),
     hostname: os.hostname(),
@@ -136,6 +147,10 @@ app.get("/api/os", authenticate, (req, res) => {
   res.json(osInfo);
 });
 
+app.use("/", router);
+
 app.listen(port, () => {
   console.log(`서버 실행 중`);
 });
+
+export default router;
