@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
 
 // 현재 파일의 URL을 가져와서 경로로 변환
+// ES6 import에서 __dirname를 쓰기 위함
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -20,21 +21,33 @@ const sessions = {};
 
 // 반복되는 부분 따로 함수로 저장
 const readJSONFile = (filePath) => {
-  try {
-    return fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath)) : [];
-  } catch (err) {
-    console.log("error");
-    return [];
-  }
+  return new Promise((resolve, reject) => {
+    fs.readFile(filePath, "utf8", (err, data) => {
+      if (err) {
+        console.log("error reading file");
+        resolve([]);
+      } else {
+        if (!data) {
+          resolve([]);
+        } else {
+          resolve(JSON.parse(data));
+        }
+      }
+    });
+  });
 };
 
 const writeJSONFile = (filePath, data) => {
-  try {
-    // JSON.stringify : JavaScript 객체를 JSON 문자열로 변환
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-  } catch (err) {
-    console.log("error");
-  }
+  return new Promise((resolve, reject) => {
+    fs.writeFile(filePath, JSON.stringify(data, null, 2), (err) => {
+      if (err) {
+        console.log("error writing file");
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
 };
 
 // GET /
@@ -43,35 +56,47 @@ app.get("/", (req, res) => {
 });
 
 // POST /api/signup
-app.post("/api/signup", (req, res) => {
+app.post("/api/signup", async (req, res) => {
   const { username, password, email } = req.body;
 
-  const users = readJSONFile("users.json");
-  users.push({ username, password, email });
-  writeJSONFile("users.json", users);
+  try {
+    const users = await readJSONFile("users.json");
+    users.push({ username, password, email });
+    await writeJSONFile("users.json", users);
 
-  res.status(201).send("회원가입 완료");
+    res.status(201).send("회원가입 완료");
+  } catch (err) {
+    res.status(500).send("서버 오류");
+  }
 });
 
 // POST /api/login
-app.post("/api/login", (req, res) => {
+app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
-  const users = readJSONFile("users.json");
-  const isUser = users.find(
-    (user) => user.username === username && user.password === password
-  );
 
-  if (isUser) {
-    // 인증 토큰 생성
-    const token = `${username}-${Date.now()}`;
-    sessions[token] = username;
+  try {
+    const users = await readJSONFile("users.json");
+    const isUser = users.find(
+      (user) => user.username === username && user.password === password
+    );
 
-    // 토큰을 쿠키로 설정 (httpOnly : js에서 접근 X, 1시간 유지))
-    res.cookie("auth_token", token, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+    if (isUser) {
+      // 인증 토큰 생성
+      const token = `${username}-${Date.now()}`;
+      sessions[token] = username;
 
-    res.status(200).send("로그인 성공");
-  } else {
-    res.status(401).send("아이디 또는 비밀번호가 잘못되었습니다.");
+      // 토큰을 쿠키로 설정 (httpOnly : js에서 접근 X, 1시간 유지))
+      res.cookie("auth_token", token, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000,
+      });
+
+      res.status(200).send("로그인 성공");
+    } else {
+      res.status(401).send("아이디 또는 비밀번호가 잘못되었습니다.");
+    }
+  } catch (err) {
+    res.status(500).send("서버 오류");
   }
 });
 
@@ -90,10 +115,14 @@ const authenticate = (req, res, next) => {
 };
 
 // GET /api/users
-app.get("/api/users", authenticate, (req, res) => {
-  const users = readJSONFile("users.json");
-  const safeUsers = users.map(({ username, email }) => ({ username, email }));
-  res.json(safeUsers);
+app.get("/api/users", authenticate, async (req, res) => {
+  try {
+    const users = await readJSONFile("users.json");
+    const safeUsers = users.map(({ username, email }) => ({ username, email }));
+    res.json(safeUsers);
+  } catch (err) {
+    res.status(500).send("서버 오류");
+  }
 });
 
 // GET /api/os
