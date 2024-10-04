@@ -9,13 +9,15 @@ import jwt from "jsonwebtoken";
 const SECRET_KEY = "your-secret-key";
 
 const app = express(); // 여기서 express 애플리케이션 생성
-const router = express.Router();
+const router = express.Router(); // Router 함수 호출
 const port = 3000;
 
 app.use(express.json()); // JSON 요청을 파싱하는 미들웨어
 app.use(cookieParser()); // 쿠키를 파싱하는 미들웨어
 
 // 반복되는 부분 따로 함수로 저장
+// 파일이 있는지 없는지 확인
+
 const readJSONFile = (filePath) => {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, "utf8", (err, data) => {
@@ -147,7 +149,12 @@ router.get("/api/os", authenticate, (req, res) => {
   res.json(osInfo);
 });
 
-app.use("/", router);
+app.use("/", router); // 라우터 사용하기
+
+// 라우터에서 설정되어 있지 않은 주소로 접속하려 할 때
+app.all("*", (req, res) => {
+  res.status(404).send("PAGE NOT FOUND");
+});
 
 app.listen(port, () => {
   console.log(`서버 실행 중`);
