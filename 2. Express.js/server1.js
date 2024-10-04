@@ -15,15 +15,16 @@ const port = 3000;
 app.use(express.json()); // JSON 요청을 파싱하는 미들웨어
 app.use(cookieParser()); // 쿠키를 파싱하는 미들웨어
 
-// 반복되는 부분 따로 함수로 저장
-// 파일이 있는지 없는지 확인
-
 const readJSONFile = (filePath) => {
   return new Promise((resolve, reject) => {
+    if (!fs.existsSync(filePath)) {
+      return resolve([]); // 파일이 없으면 빈 배열 반환
+    }
+
     fs.readFile(filePath, "utf8", (err, data) => {
       if (err) {
         console.log("error reading file");
-        resolve([]);
+        reject();
       } else {
         if (!data) {
           resolve([]);
@@ -58,7 +59,7 @@ router.post("/api/signup", async (req, res) => {
   const { username, password, email } = req.body;
 
   if (!username || !password || !email) {
-    return res.status(400).json({ error: "모든 필드를 입력해야 합니다." });
+    return res.status(400).send("모든 필드를 입력해야 합니다.");
   }
 
   try {
@@ -77,9 +78,7 @@ router.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
-    return res
-      .status(400)
-      .json({ error: "아이디와 비밀번호를 모두 입력해야 합니다." });
+    return res.status(400).send("아이디와 비밀번호를 모두 입력해야 합니다.");
   }
 
   try {
