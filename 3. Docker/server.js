@@ -49,10 +49,10 @@ const writeJSONFile = (filePath, data) => {
   });
 };
 
-// GET /
-router.get("/", (req, res) => {
-  res.sendFile(path.resolve("index.html"));
-});
+// // GET /
+// router.get("/", (req, res) => {
+//   res.sendFile(path.resolve("index.html"));
+// });
 
 // POST /api/signup
 router.post("/api/signup", async (req, res) => {

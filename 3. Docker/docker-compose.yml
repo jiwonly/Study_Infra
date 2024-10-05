@@ -1,0 +1,19 @@
+version: "3"
+services:
+  nginx:
+    image: nginx:latest
+    container_name: my-nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html
+    depends_on:
+      - express
+
+  express:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my-express
+    ports:
+      - "3000:3000"
