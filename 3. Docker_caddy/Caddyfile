@@ -1,6 +1,5 @@
 :80 {
 	root /usr/share/caddy/html # 정적 파일을 제공할 디렉토리
-	file_server 
 
 	@static {
         path /
