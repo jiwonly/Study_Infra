@@ -1,0 +1,29 @@
+:80 {
+	root /usr/share/caddy/html # 정적 파일을 제공할 디렉토리
+	file_server 
+
+	@static {
+        path /
+    }
+
+	route @static {
+        file_server
+    }
+
+	@api {
+        path /api*
+    }
+
+	route @api {
+        reverse_proxy express:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+	route {
+        respond 404  # 다른 경로로 요청이 들어오면 404
+    }
+}

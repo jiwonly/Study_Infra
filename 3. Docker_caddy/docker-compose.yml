@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  caddy:
+    image: caddy:latest
+    container_name: my-caddy
+    ports:
+      - "8000:80"
+    volumes:
+      - ./index.html:/usr/share/caddy/html/index.html
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - express
+
+  express:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my-express
+    ports:
+      - "3000:3000"
