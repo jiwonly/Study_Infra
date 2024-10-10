@@ -19,6 +19,8 @@ services:
     container_name: my-express-1
     expose:
       - "3000:3000"
+    volumes:
+      - ./express1:/app
 
   express2:
     build:
@@ -27,8 +29,8 @@ services:
     container_name: my-express-2
     expose:
       - "3000:3000"
+    volumes:
+      - ./express2:/app
 
     # ports는 외부로 포트를 노출하지만,
     # expose는 컨테이너 간 통신에만 사용 (내부 통신)
-
-    # expose로 바꾼 뒤부터 os정보가 컨테이너 정보로 나온다...
