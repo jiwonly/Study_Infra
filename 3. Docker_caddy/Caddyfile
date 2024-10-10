@@ -5,7 +5,8 @@
 	@api path /api*
 
 	route @api {
-        reverse_proxy express:3000 {
+        reverse_proxy express1:3000 express2:3000 {
+            lb_policy first # 로드 밸런싱
             header_up Host {host}
             header_up X-Real-IP {remote}
             header_up X-Forwarded-For {remote}
